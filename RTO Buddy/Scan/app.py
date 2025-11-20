@@ -143,19 +143,23 @@ class RTOBuddyInterface:
         elif params['output'] == "":
             self._change_app_message("Error: Please select output folder.", "red")
             return
-        elif params['input'] == "" and params['photos']['chassis_photo'] == "" and params['photos']['front_photo'] == "" and params['photos']['side_photo'] == "" and params['photos']['back_photo'] == "":
-            self._change_app_message("Error: Input file or vehicle photo is required.", "red")
-            return
-        if params['input'] != "":
-            pages = PyPDF4.PdfFileReader(open(params['input'], 'rb'), strict=False).numPages
-            if (params['rto'] == 1 and pages != 10) or params['rto'] == 2 and pages != 12:
-                self._change_app_message("Error: Input pdf file in not valid.", "red")
-                return
-        response = self.sp_obj.run_pipeline(params)
-        if 'status' in response:
-            if response['status'] == "success":
-                self._change_app_message(response['message'], "green")
-                self._reset_ui()
+       if params['input'] != "":
+    pages = PyPDF4.PdfFileReader(open(params['input'], 'rb'), strict=False).numPages
+    # New flexible affidavit validation logic for ALL RTO
+    if pages < 10:
+        err = f"Only {pages} pages detected. Add {10-pages} more pages. Required: 10-11 pages (9 fixed + affidavit)."
+        self._change_app_message(err, "red")
+        return
+    elif pages == 10:
+        # 9 fixed + 1 affidavit (Valid)
+        pass
+    elif pages == 11:
+        # 9 fixed + 2 affidavit (Valid)
+        pass
+    else: # pages > 11
+        err = f"{pages} pages detected. Remove {pages-11} page(s). Required: 10-11 pages (9 fixed + affidavit)."
+        self._change_app_message(err, "red")
+        return
             elif response['status'] == "error":
                 self._change_app_message(response['message'], "red")
 
